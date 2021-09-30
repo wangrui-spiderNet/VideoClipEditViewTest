@@ -31,7 +31,7 @@ fun getVideoItem(contentResolver: ContentResolver, data: Intent): VideoItem? {
             // 视频ID:MediaStore.Audio.Media._ID
             var videoId = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID))
             // 视频名称：MediaStore.Audio.Media.TITLE
-            var title = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE))
+            var title = cursor.getString(cursor.getColumnIndexOrThrow("_display_name"))
             // 视频路径：MediaStore.Audio.Media.DATA
             var videoPath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA))
             // 视频时长：MediaStore.Audio.Media.DURATION

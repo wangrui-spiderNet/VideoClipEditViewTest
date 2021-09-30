@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import com.daasuu.epf.custfilter.GlFlashFliter
 import com.daasuu.epf.custfilter.GlShakeFilter
@@ -13,7 +14,9 @@ import com.spx.egl.GlFilterList
 import com.spx.egl.GlFilterPeriod
 import com.daasuu.mp4compose.composer.Mp4Composer
 import com.spx.egl.VideoProcessConfig
+import kotlinx.android.synthetic.main.activity_video_edit.*
 import kotlinx.android.synthetic.main.video_process_activity_layout.*
+import kotlinx.android.synthetic.main.video_process_activity_layout.player_view_mp
 
 class VideoProgressActivity : AppCompatActivity() {
     companion object {
@@ -36,15 +39,27 @@ class VideoProgressActivity : AppCompatActivity() {
 
         val filterConfigList = videoProcessConfig.filterConfigList
 
-        for (fconfig in filterConfigList){
-            glFilterList.putGlFilter(GlFilterPeriod(fconfig.startTimeMs, fconfig.endTimeMs, FilterType.createGlFilter(fconfig.filterName, null, this)))
+        for (fconfig in filterConfigList) {
+            glFilterList.putGlFilter(
+                GlFilterPeriod(
+                    fconfig.startTimeMs,
+                    fconfig.endTimeMs,
+                    FilterType.createGlFilter(fconfig.filterName, null, this)
+                )
+            )
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        player_view_mp.pausePlay()
     }
 
     override fun onResume() {
         super.onResume()
         var s = System.currentTimeMillis();
-        var mp4Composer = Mp4Composer(videoProcessConfig.srcMediaPath, videoProcessConfig.outMediaPath)
+        var mp4Composer =
+            Mp4Composer(videoProcessConfig.srcMediaPath, videoProcessConfig.outMediaPath)
                 .frameRate(30)
                 .filterList(glFilterList)
                 .listener(object : Mp4Composer.Listener {
@@ -57,15 +72,26 @@ class VideoProgressActivity : AppCompatActivity() {
                         Log.d(TAG, "onCompleted()")
                         runOnUiThread {
                             var e = System.currentTimeMillis()
-                          Toast.makeText(this@VideoProgressActivity, "生成视频成功,耗时${e-s}ms, 文件放在:${videoProcessConfig.outMediaPath}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@VideoProgressActivity,
+                                "生成视频成功,耗时${e - s}ms, 文件放在:${videoProcessConfig.outMediaPath}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            pb_progress.visibility = View.INVISIBLE
+                            tv_position.text = "文件放在:${videoProcessConfig.outMediaPath}"
+
+                            player_view_mp.setDataSource(videoProcessConfig.outMediaPath)
+                            player_view_mp.start()
+
                         }
                         progression = 100
-                        finish()
                     }
 
                     override fun onCanceled() {
                         runOnUiThread {
-                            Toast.makeText(this@VideoProgressActivity, "生成视频取消", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@VideoProgressActivity, "生成视频取消", Toast.LENGTH_LONG)
+                                .show()
                         }
 
                     }
@@ -73,7 +99,8 @@ class VideoProgressActivity : AppCompatActivity() {
                     override fun onFailed(exception: Exception) {
                         Log.d(TAG, "onFailed()")
                         runOnUiThread {
-                            Toast.makeText(this@VideoProgressActivity, "生成视频失败", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@VideoProgressActivity, "生成视频失败", Toast.LENGTH_LONG)
+                                .show()
                         }
 
                     }
@@ -81,6 +108,12 @@ class VideoProgressActivity : AppCompatActivity() {
                 .start()
 
         showProgress()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        player_view_mp.pausePlay()
+        player_view_mp.release()
     }
 
     private fun showProgress() {
